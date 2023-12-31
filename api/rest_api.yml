@@ -1,6 +1,7 @@
 openapi: 3.0.0
 info:
   title: Media portal API
+  description: Please, follow the link to see the documentation online - [Swagger Hub](https://app.swaggerhub.com/apis/NISSAN65/Social_Network_API/1.0.0)
   version: 1.0.0
 
 paths:
