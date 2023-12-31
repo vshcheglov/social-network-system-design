@@ -173,10 +173,21 @@ Explanation of this model can be found [here](https://c4model.com/)
 
 
 * C2 level per system
-  * users: ![C3_users](./architectureAsCode/architectureImages/c2_users.png)
-  * posts: ![C3_users](./architectureAsCode/architectureImages/c2_posts.png)
-  * chats/messages: ![C3_users](./architectureAsCode/architectureImages/c2_chats.png)
-  * media: ![C3_media](./architectureAsCode/architectureImages/c2_media.jpg)
+  * users:
+
+![C3_users](./architectureAsCode/architectureImages/c2_users.png)
+
+  * posts:
+
+![C3_users](./architectureAsCode/architectureImages/c2_posts.png)
+
+  * chats/messages:
+
+![C3_users](./architectureAsCode/architectureImages/c2_chats.png)
+
+  * media: 
+
+![C3_media](./architectureAsCode/architectureImages/c2_media.jpg)
 
 ## Basic calculations
 
