@@ -1,10 +1,11 @@
 // Use DBML to define your database structure
 // Docs: https://dbml.dbdiagram.io/docs
 
+
+//Relational database (PostgreSQL)
 // Replication
 // Master - Slave (Async)
-// Sharding (By user_id, hash)
-
+// Sharding with virtual buckets (By user_id, hash)
 
 Table user {
   id integer [pk]
@@ -23,31 +24,19 @@ Table city {
 }
 
 
-Table users_friends {
-  friendship_id integer [pk]
-  user_id1 integer
-  user_id2 integer
-  status varchar(11) //Enum: pending, accepted, declined, subscriber, blacklisted
-  created_at timestamp
-  updated_at timestamp
-}
-
-
-Table users_love_relations {
-  relation_id integer [pk]
-  user_id1 integer
-  user_id2 integer
-  type_id integer
-  created_at timestamp
-  updated_at timestamp
-}
-
-
-Table love_relation_type {
+Table media {
   id integer [pk]
-  name varchar(20)
+  post_id integer [ref: > post.id]
+  media_url varchar(255)
+  created_at timestamp
 }
 
+
+
+
+//NoSQL database (MongoDB)
+// Master - Slave (Async)
+// Sharding with virtual buckets (By user_id, hash)
 
 Table post {
   id integer [pk]
@@ -59,15 +48,6 @@ Table post {
   created_at timestamp
   updated_at timestamp
 }
-
-
-Table media {
-  id integer [pk]
-  post_id integer [ref: > post.id]
-  media_url varchar(255)
-  created_at timestamp
-}
-
 
 Table comment {
   id integer [pk]
@@ -98,8 +78,6 @@ Table chat_rooms_users {
   user_id integer
 }
 
-
-
 Table message {
   id integer [pk]
   author_id integer
@@ -110,8 +88,34 @@ Table message {
 
 
 
+// Graph database (Neo4j)
+// Master - Slave (Async)
+// Sharding with virtual buckets (By friendship_id, hash)
+
+Table users_friends {
+  friendship_id integer [pk]
+  user_id1 integer
+  user_id2 integer
+  status varchar(11) //Enum: pending, accepted, declined, subscriber, blacklisted
+  created_at timestamp
+  updated_at timestamp
+}
+
+// Sharding with virtual buckets (By relation_id, hash)
+Table users_love_relations {
+  relation_id integer [pk]
+  user_id1 integer
+  user_id2 integer
+  type_id integer
+  created_at timestamp
+  updated_at timestamp
+}
 
 
+Table love_relation_type {
+  id integer [pk]
+  name varchar(20)
+}
 
 
 
