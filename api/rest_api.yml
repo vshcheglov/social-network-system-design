@@ -1,0 +1,761 @@
+openapi: 3.0.0
+info:
+  title: Media portal API
+  version: 1.0.0
+
+paths:
+  /users/profile/{userId}:
+    get:
+      tags:
+        - Users
+      summary: Get user profile
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        404:
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /friends/{userId}:
+    get:
+      tags:
+        - Friends
+      summary: Get all friends of user with limit and offset
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  friends:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        404:
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /friends/{friendId}:
+    delete:
+      tags:
+        - Friends
+      summary: Delete a friend by ID
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - in: path
+          name: friendId
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          $ref: '#/components/responses/SuccessResponse'
+        404:
+          description: Friend not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /friend-requests:
+    get:
+      tags:
+        - Friends requests
+      summary: Get all friend requests with limit and offset
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            default: incoming
+            enum:
+              - outgoing
+              - incoming
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  requests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FriendRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /friend-requests/{userId}:
+    post:
+      tags:
+        - Friends requests
+      summary: Send friend request
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - in: path
+          name: userId
+          description: User to send the friend-request
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          $ref: '#/components/responses/SuccessResponse'
+        404:
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /friend-requests/${requestId}:
+    delete:
+      tags:
+        - Friends requests
+      summary: Cancel friend request
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - in: path
+          name: requestId
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          $ref: '#/components/responses/SuccessResponse'
+        404:
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /friend-requests/{requestId}:
+    patch:
+      tags:
+        - Friends requests
+      summary: Approve/Decline friend request
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - in: path
+          name: requestId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - approve
+                    - decline
+      responses:
+        200:
+          $ref: '#/components/responses/SuccessResponse'
+        404:
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/{userId}/feeds:
+    get:
+      tags:
+        - Feeds
+      summary: Get feeds posts with limit and offset
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  posts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Post'
+        404:
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+  /feeds/posts:
+    get:
+      tags:
+        - Feeds
+      summary: Get home feeds posts with limit and offset
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  posts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Post'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Feeds
+      summary: Add new post to feeds
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                mediaIds:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Media'
+
+      responses:
+        200:
+          $ref: '#/components/responses/SuccessResponse'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /feeds/posts/{postId}:
+    delete:
+      tags:
+        - Feeds
+      summary: Delete a post
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/SuccessResponse'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /media/upload:
+    post:
+      summary: Upload media file
+      security:
+        - BearerAuth: [ ]
+      tags:
+        - Media
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: Media file uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  mediaId:
+                    type: integer
+                  url:
+                    type: string
+        400:
+          $ref: '#/components/responses/BadRequest'
+        413:
+          description: File size exceeds the maximum limit
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        415:
+          description: Unsupported media type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /media/{mediaId}:
+    delete:
+      tags:
+        - Media
+      summary: Delete media file
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/SuccessResponse'
+        404:
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /chats:
+    get:
+      tags:
+        - Chat
+      summary: Get list of chats
+      security:
+        - BearerAuth: [ ]
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  chats:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Chat'
+    post:
+      tags:
+        - Chat
+      summary: Create new chat
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participants:
+                  type: array
+                  items:
+                    type: string
+                title:
+                  type: string
+
+
+      responses:
+        201:
+          description: Chat created successfully
+          content:
+            application/json:
+              example:
+                id: "2"
+                title: "New Chat"
+                lastMessage: null
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /chats/{chatId}:
+    get:
+      tags:
+        - Chat
+      summary: Get messages in the chat
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+        404:
+          description: Chat not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Chat
+      summary: Send a message to the chat
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+      responses:
+        200:
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  timestamp:
+                    type: integer
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    SuccessMessage:
+      type: object
+      properties:
+        message:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          default: 10
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+        total:
+          type: integer
+
+    Media:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        url:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        photo:
+          type: string
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        photo:
+          type: string
+        friends:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+
+
+    FriendRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        requestType:
+          type: string
+          enum:
+            - incoming
+            - outgoing
+        created_at:
+          type: integer
+        user:
+          allOf:
+            - $ref: "#/components/schemas/User"
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+        authorId:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        mediaUrls:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+        timestamp:
+          type: integer
+
+
+    Chat:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        lastMessage:
+          $ref: '#/components/schemas/Message'
+      required:
+        - id
+        - title
+        - lastMessage
+
+    Message:
+      type: object
+      properties:
+        authorId:
+          type: number
+        content:
+          type: string
+        created_at:
+          type: string
+        mediaUrls:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+      required:
+        - authorId
+        - content
+        - mediaUrls
+
+
+
+  responses:
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFoundError:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    SuccessResponse:
+      description: Successful operation
+    SuccessResponseWithMessage:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessMessage'
+
+

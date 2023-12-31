@@ -1,0 +1,149 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+// Replication
+// Master - Slave (Async)
+// Sharding (By user_id, hash)
+
+
+Table user {
+  id integer [pk]
+  firstName string
+  lastName string
+  photo string
+  hobbies string
+  city_id integer
+  created_at timestamp
+}
+
+
+Table city {
+  id integer [pk]
+  name string
+}
+
+
+Table users_friends {
+  friendship_id integer [pk]
+  user_id1 integer
+  user_id2 integer
+  status varchar(11) //Enum: pending, accepted, declined, subscriber, blacklisted
+  created_at timestamp
+  updated_at timestamp
+}
+
+
+Table users_love_relations {
+  relation_id integer [pk]
+  user_id1 integer
+  user_id2 integer
+  type_id integer
+  created_at timestamp
+  updated_at timestamp
+}
+
+
+Table love_relation_type {
+  id integer [pk]
+  name varchar(20)
+}
+
+
+Table post {
+  id integer [pk]
+  author_id integer
+  title varchar(50)
+  content string
+  views integer
+  media_urls string
+  created_at timestamp
+  updated_at timestamp
+}
+
+
+Table media {
+  id integer [pk]
+  post_id integer [ref: > post.id]
+  media_url varchar(255)
+  created_at timestamp
+}
+
+
+Table comment {
+  id integer [pk]
+  author_id integer
+  post_id integer
+  content string
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table like {
+  id integer [pk]
+  author_id integer
+  post_id integer
+  content string
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table chat_room {
+  id integer [pk]
+  name varchar(50)
+}
+
+Table chat_rooms_users {
+  id integer [pk]
+  chat_room_id integer
+  user_id integer
+}
+
+
+
+Table message {
+  id integer [pk]
+  author_id integer
+  chat_room_id integer
+  content string
+  media_urls string
+}
+
+
+
+
+
+
+
+
+
+Ref: "user"."id" < "users_friends"."user_id1"
+
+Ref: "user"."id" < "users_friends"."user_id2"
+
+Ref: "user"."city_id" < "city"."id"
+
+Ref: "user"."id" < "users_love_relations"."user_id1"
+
+Ref: "user"."id" < "users_love_relations"."user_id2"
+
+Ref: "users_love_relations"."type_id" < "love_relation_type"."id"
+
+Ref: "comment"."author_id" > "user"."id"
+
+Ref: "post"."id" < "comment"."post_id"
+
+Ref: "user"."id" < "like"."author_id"
+
+Ref: "post"."id" < "like"."post_id"
+
+Ref: "chat_room"."id" < "chat_rooms_users"."chat_room_id"
+
+Ref: "user"."id" < "chat_rooms_users"."user_id"
+
+Ref: "chat_room"."id" < "message"."chat_room_id"
+
+Ref: "user"."id" < "message"."author_id"
+
+Ref: "media"."id" < "message"."media_urls"
+
+Ref: "user"."id" < "post"."author_id"

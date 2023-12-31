@@ -1,0 +1,45 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+System(apiGateway, "API Gateway", "API Gateway to proxy the traffic into the internal network")
+
+
+System_Boundary(c3, "Inner network (K8S cluster). Area: users system") {
+    Container(users, "User service", "JS/Go/Python", "Responsible for the user home page and settings")
+
+    ContainerDb(usersDb, "Users database", $tags="db", "PostgreSQL", "Stores users data")
+    ContainerDb(usersCache, "Users cache", $tags="db", "Redis/Tarantool", "Stores popular users")
+}
+
+System_Boundary(relationSystem, "Relations system") {
+    Container(relationService, "Relations microservice", "JS/Go/Python")
+    ContainerDb(graph, "Relation database", $tags="db", "Neo4J", "Keeps info about all relations")
+}
+
+System_Boundary(s3System, "Network for blob storage.") {
+    ContainerDb_Ext(cdn, "CDN", $tags="db", "Amazon CloudFront", "Delivers static content across the world DC")
+    ContainerDb_Ext(s3, "Blob storage", $tags="db", "Amazon S3", "Storage for blob data")
+}
+
+
+ContainerQueue(relationMQ, "Message queue", "Kafka", "Has 2 topics: 1) addition of friends 2) removal friends")
+
+
+Rel(relationService, graph, "Persists/Retrieves/Deletes data")
+
+Rel(apiGateway, relationService, "Request to the relations system")
+Rel(relationService, relationMQ, "After friend have been added or deleted - Update the users System")
+Rel_L(relationMQ, users, "Pulls data")
+
+Rel(apiGateway, users, "Request to the users system")
+
+
+Rel(users, usersDb, "Get and create user profiles")
+Rel(users, usersCache, "Get frequently requested users")
+
+Rel_D(users, s3System, "Saves data and gets URL", "gRPC")
+
+
+Rel_L(SeeMainC2Diagram, apiGateway, "Request from LB")
+
+@enduml

@@ -1,0 +1,39 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+System(apiGateway, "API Gateway", "API Gateway to proxy the traffic into the internal network")
+
+Container(mediaSystem, "Media System", "Software system", "Accepts a request to upload media files and returns a url")
+ContainerQueue(messageQueue, "Events queue", "Kafka", "Message queue for communication between services")
+
+System_Boundary(postSystem, "Inner Network (K8S cluster). Area: Posts system") {
+    Container(postService, "Post service", "JS/Go/Python", "Post creation and storage system", $tags="webApp")
+    Container(feedsService, "Feeds service", "JS/Go/Python", "Get cached posts for active users")
+    Container(activityService, "Activity service", "JS/Go/Python", "Create comments and likes for a post")
+    ContainerDb(activityDatabase, "Activity Database", "MongoDb", "Stores comments and likes")
+    ContainerDb(postDatabase, "Post Database", "MongoDB", "Stores users posts",  $tags="db")
+    ContainerDb(postCache, "Post Cache", "Redis/Tarantool", "Stores prepared posts for users who have been online within last 3 days",  $tags="db")
+    ContainerDb(postCelebsCache, "Post celebs Cache", "Redis/Tarantool", "Stores celebrities' posts")
+}
+
+System_Boundary(relationSystem, "System for all the relations between people") {
+    Container(relationService, "Relations microservice", "JS/Go/Python")
+    ContainerDb(graph, "Relation database", $tags="db", "Neo4J", "Keeps info about all relations")
+}
+
+Rel(relationService, graph, "Persists/Retrieves/Deletes data")
+Rel_U(feedsService, relationService, "Gets data about friends to update feed for each user", "gRPC")
+
+Rel(apiGateway, feedsService, "request for posts")
+Rel(apiGateway, activityService, "Comments and likes request")
+
+Rel(activityService, activityDatabase, "Request to create and receive comments and likes")
+Rel(postService, postDatabase, "Create and receive posts")
+Rel(feedsService, postCache, "Gets and sets frequently requested user profiles")
+Rel(feedsService, postCelebsCache, "Merge with celebs posts when GET request")
+Rel_L(postService, messageQueue, "Upload media-file")
+Rel(mediaSystem, messageQueue, "Passes the url of the loaded media file")
+Rel(feedsService, postService, "Get and create users' posts")
+
+Rel_L(SeeMainC2Diagram, apiGateway, "Request from LB")
+@enduml

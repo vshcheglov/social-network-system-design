@@ -1,0 +1,64 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "User", "User of the social network who has an account")
+
+System(geo, "geoDNS", "geoDNS which allows to redistribute a request to the closest Data Center")
+
+System_Boundary(loadBalancers, "Load Balancers in Data Centers Across Different Regions") {
+    System(lb1, "Load balancer: DC1", "Nginx/HAProxy")
+    System(lb2, "Load balancer: DC2", "Nginx/HAProxy")
+    System(lb3, "Load balancer: DC3", "Nginx/HAProxy")
+}
+
+System_Boundary(dataCenters, "Data Centers") {
+    System(dc2System, "Similar system in DC2")
+    System(dc3System, "Similar system in DC3")
+}
+
+System(apiGateway, "API Gateway", "API Gateway to proxy the traffic into the internal network")
+
+System_Boundary(innerNetwork, "Inner network (K8S cluster)") {
+    Container(relationService, "Relations service", "JS/Go/Python")
+    Container(postService, "Posts service", "JS/Go/Python")
+    Container(usersService, "Users service", "JS/Go/Python")
+    Container(chatService, "Chats service", "JS/Go/Python")
+    Container(analyticsService, "Analytics service", "JS/Go/Python")
+
+    ContainerDb(postDB, "Post database", $tags="db", "PostgreSQL", "Stores all data about posts")
+    ContainerDb(chatsDB, "Messages database", $tags="db", "MongoDB", "Stores all data about messages")
+    ContainerDb(usersDb, "Users database", $tags="db", "PostgreSQL", "Stores all data about users")
+    ContainerDb(graph, "Relation database", $tags="db", "Graph DBMS: Neo4J", "Keeps info about all relations")
+}
+
+ContainerQueue(mq, "Message Queue", "Kafka", "Topic based queue to decouple event sending from analytics service to analytics system")
+System(analyticsSystem, "Analytics system", "System which is used for making analytics about all the actions in the social network system")
+
+System_Boundary(s3System, "Network for blob storage. Accessed by all DC") {
+    ContainerDb_Ext(cdn, "CDN", $tags="db", "Amazon CloudFront", "Delivers static content across the world DC")
+    ContainerDb_Ext(s3, "Blob storage", $tags="db", "Amazon S3", "Storage for blob data")
+}
+
+
+Rel(user, geo, "User makes a request")
+
+Rel_U(geo, loadBalancers, "Request got distributed from geoDNS to the appropriate LB")
+
+Rel(lb2, dc2System, "Request from LB to the system in DC2")
+Rel(lb3, dc3System, "Request from LB to the system in DC3")
+
+Rel_L(lb1, apiGateway, "Request from LB to API Gateway")
+
+Rel(apiGateway, innerNetwork, "Request to any microservice in the system", "gRPC")
+
+Rel(postService, postDB, "Persists/Retrieves data")
+Rel(chatService, chatsDB, "Persists/Retrieves data")
+Rel(usersService, usersDb, "Persists/Retrieves data")
+Rel(relationService, graph, "Persists/Retrieves/Deletes data")
+
+Rel_U(analyticsService, mq, "Analytics microservice sends data to topic to decouple process between separate systems")
+Rel_R(mq, analyticsSystem, "Analytics systems pulls data from the desired topics")
+
+Rel(innerNetwork, s3System, "Microservices save blob in S3 and get URL")
+
+@enduml

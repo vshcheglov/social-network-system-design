@@ -1,0 +1,16 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+HIDE_STEREOTYPE()
+
+Person(user, "User", "User of the social network who has an account")
+System(apiGateway, "API Gateway", "API Gateway to proxy the traffic into the internal network + plays role of SSO")
+Container(socialNetwork, "Social Network", "Main system")
+System(analyticsSystem, "Analytics system", "System which is used for making analytics about all the actions in the social network system")
+
+
+Rel(user, apiGateway, "User makes a request to the system")
+Rel(apiGateway, socialNetwork, "Makes request to the main system")
+Rel(socialNetwork, analyticsSystem, "Main system gives data to the analytics system")
+
+
+@enduml

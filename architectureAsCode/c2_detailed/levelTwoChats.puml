@@ -1,0 +1,44 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "User", "User of the social network who has an account")
+System(apiGateway, "API Gateway", "API Gateway to proxy the traffic into the internal network")
+
+System_Boundary(innerNetwork, "Inner network (K8S cluster). Area: Chat System.") {
+    Container(chat, "Chat service", "JS/Go/Python", "Responsible for writing logic in the chats")
+    Container(notifier, "Notification service", "JS/Go/Python", "1) Sends notification to the user that there is a new message 2) Deletes the message if sender deleted it")
+
+    System_Boundary(chatsDatabase, "Database for storing information about chats/messages") {
+     ContainerDb(lastMessage, "LastMessageDB", "Redis", "Last message in the chat. Done on the application level")
+     ContainerDb(lastSeen, "LastSeenMessageDB", "Redis", "Last SEEN message by user in the chat. Done on the application level")
+     ContainerDb(channels, "ChannelsDB", "NoSQL", "DB for channels", $tags="db")
+     ContainerDb(messages, "MessagesDB", "NoSQL", "DB for messages", $tags="db")
+    }
+
+    ContainerQueue(mq, "Message Queue", "Kafka", "Topic based queue which")
+}
+
+System_Boundary(smartSharding, "Smart sharding system") {
+    ContainerDb(smartShardingDb, "Coordinator database", $tags="db", "Zookeeper + replication for durability", "Database for smart sharding coordination")
+    Container(smartShardingService, "Smart sharding service", "JS/Go/Python", "Regulating the data across shards and being responsible for data redistribution")
+}
+
+System_Boundary(s3System, "Network for blob storage.") {
+    ContainerDb_Ext(cdn, "CDN", $tags="db", "Amazon CloudFront", "Delivers static content across the world DC")
+    ContainerDb_Ext(s3, "Blob storage", $tags="db", "Amazon S3", "Storage for blob data")
+}
+
+Rel_L(SeeMainC2Diagram, apiGateway, "Request from LB")
+
+Rel(apiGateway, chat, "User sends a message")
+
+Rel(chat, s3System, "Saves data and gets URL", "gRPC")
+Rel(chat, mq, "Message goes to the MQ")
+Rel(mq, notifier, "Pulls message from MQ")
+Rel(notifier, user, "WebSocket/SSE channel")
+
+Rel_R(smartShardingService, smartShardingDb, "Requests info about shards")
+Rel(chat, smartShardingService, "Read and write requests")
+Rel_L(smartShardingService, chatsDatabase, "Persists data")
+
+@enduml
